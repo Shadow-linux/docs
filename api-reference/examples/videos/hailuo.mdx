@@ -1,0 +1,971 @@
+---
+title: '海螺视频生成示例'
+---
+
+# 海螺视频生成示例
+
+以下示例展示如何使用海螺（Hailuo）视频生成模型通过 OpenAI 兼容接口生成高质量的视频内容。
+
+海螺视频生成分为三个步骤：
+1. **创建视频生成任务** - 提交生成请求，获得任务ID
+2. **查询任务状态** - 定期检查任务进度
+3. **下载生成的视频** - 任务完成后下载视频文件
+
+## 支持的参数
+
+### 通用参数
+- **model**: 使用的模型名称（通过模型名称控制输出分辨率，详见下方模型列表）
+- **prompt**: 视频描述文本（必需，最大2000字符，支持中英文）
+- **seconds** (string, 可选): 生成视频的时长，单位为秒
+  - **重要**: seconds直接影响费用，请在调用前确认模型价格
+  - **MiniMax-Hailuo-2.3-1080P / MiniMax-Hailuo-2.3-768P**: 可选值为"6"、"10"，默认值为"6"
+  - **MiniMax-Hailuo-2.0-1080P / MiniMax-Hailuo-2.0-768P**: 可选值为"6"、"10"，默认值为"6"
+  - 示例值："6"
+- **content.text** (string, 可选): 视频描述文本，用于指导视频生成的内容和风格
+  - **使用说明**: 在使用 content 数组格式时，通过 text 类型的 content 元素来传递视频描述
+  - **支持语言**: 中文和英文
+  - **内容要求**: 描述应该详细、具体，有助于模型理解所需生成的视频内容
+  - **与 prompt 的关系**: 二选一即可
+  - **运镜控制**: 支持[指令]语法进行运镜控制，如[推进]、[拉远]、[旋转]等
+  - 示例值："一只可爱的小猫在花园里玩耍，阳光明媚，画面温馨[推进特写]"
+- **content.image_url.url** (string, 可选): 输入图像的公网可访问的HTTP/HTTPS链接或Base64编码
+  - **重要**: 链接不能包含中文等非ASCII字符，否则需要进行编码后再传入
+  - **本地文件**: 可通过上传文件获取临时URL，或使用Base64编码
+  - **格式**: JPG、JPEG、PNG、BMP、WEBP
+  - **尺寸**: 图像的宽度和高度都在合理范围内，建议宽高比与视频分辨率匹配
+  - **文件大小**: 建议不超过10MB
+  - 示例值：https://example.com/input_image.jpg
+
+### 扩展参数
+
+- **prompt_optimizer** (boolean, 可选): 是否自动优化prompt，使用大模型对输入prompt进行智能优化
+  - **true**: 默认值，开启智能优化，能显著提升生成质量
+  - **false**: 不开启智能优化，使用原始prompt
+  - 示例值：true
+
+- **fast_pretreatment** (boolean, 可选): 是否缩短prompt_optimizer的优化耗时
+  - **false**: 默认值，使用标准优化流程，质量更佳
+  - **true**: 快速优化模式，减少耗时但可能影响优化效果
+  - **注意**: 仅对海螺2.3和海螺2.0系列模型生效
+  - 示例值：false
+
+- **aigc_watermark** (boolean, 可选): 是否在生成的视频中添加AI生成水印标识
+  - **false**: 默认值，不添加水印
+  - **true**: 添加水印，水印通常位于视频角落
+  - 示例值：false
+
+## 文生视频模型介绍
+
+以下是海螺文生视频支持的各个模型及其规格说明：
+
+<Note>
+**分辨率选择说明**: 我们通过模型名称来控制输出视频的分辨率。例如，`MiniMax-Hailuo-2.3-1080P` 输出 1080P 分辨率视频，`MiniMax-Hailuo-2.3-768P` 输出 768P 分辨率视频。请根据您的需求选择合适的模型。
+</Note>
+
+### 海螺 2.3 系列
+
+| 模型名称 | 模型简介 | 输出视频规格 |
+|---------|----------|-------------|
+| **MiniMax-Hailuo-2.3-1080P** 🌟推荐 | **海螺2.3旗舰版 (1080P)**<br/>最新一代视频生成模型，画质和动态效果显著提升 | • 分辨率：1920×1080 (1080P)<br/>• 视频时长：6秒、10秒<br/>• 固定规格：25fps、MP4 (H.264编码) |
+| **MiniMax-Hailuo-2.3-768P** | **海螺2.3旗舰版 (768P)**<br/>最新一代视频生成模型，适合对分辨率要求较低的场景 | • 分辨率：1280×768 (768P)<br/>• 视频时长：6秒、10秒<br/>• 固定规格：25fps、MP4 (H.264编码) |
+
+### 海螺 2.0 系列
+
+| 模型名称 | 模型简介 | 输出视频规格 |
+|---------|----------|-------------|
+| **MiniMax-Hailuo-2.0-1080P** 🌟推荐 | **海螺2.0专业版 (1080P)**<br/>成熟稳定的视频生成模型，综合性能优秀 | • 分辨率：1920×1080 (1080P)<br/>• 视频时长：6秒、10秒<br/>• 固定规格：25fps、MP4 (H.264编码) |
+| **MiniMax-Hailuo-2.0-768P** | **海螺2.0专业版 (768P)**<br/>成熟稳定的视频生成模型，适合对分辨率要求较低的场景 | • 分辨率：1280×768 (768P)<br/>• 视频时长：6秒、10秒<br/>• 固定规格：25fps、MP4 (H.264编码) |
+
+## 步骤1：创建视频生成任务
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://api.tokenops.ai/v1/videos \
+  --header 'Authorization: Bearer <API-KEY>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "model": "MiniMax-Hailuo-2.3-1080P",
+    "prompt": "在未来科技城市的高楼天台上，一位身穿发光服装的女孩正在练习太极拳，城市的霓虹灯光在夜幕中闪烁，远处可见飞行汽车穿梭[缓慢推进][俯拍视角]",
+    "seconds": "6",
+    "prompt_optimizer": true,
+    "fast_pretreatment": false,
+    "aigc_watermark": false
+  }'
+```
+
+```python Python
+import requests
+import time
+
+API_KEY = "<API-KEY>"
+BASE_URL = "https://api.tokenops.ai/v1"
+
+def create_hailuo_video(prompt, model="MiniMax-Hailuo-2.3-1080P", **kwargs):
+    """
+    创建海螺视频生成任务
+
+    Args:
+        prompt: 视频描述文本
+        model: 使用的模型名称（通过模型名称控制分辨率，如 MiniMax-Hailuo-2.3-1080P 或 MiniMax-Hailuo-2.3-768P）
+        **kwargs: 其他参数（seconds, prompt_optimizer, fast_pretreatment, aigc_watermark）
+
+    Returns:
+        任务创建响应
+    """
+    url = f"{BASE_URL}/videos"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    # 构建请求数据
+    data = {
+        "model": model,
+        "prompt": prompt
+    }
+
+    # 添加可选参数
+    for key in ["seconds", "prompt_optimizer", "fast_pretreatment", "aigc_watermark"]:
+        if key in kwargs:
+            data[key] = kwargs[key]
+    
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"海螺视频生成任务已创建")
+            print(f"任务ID: {result.get('id')}")
+            print(f"状态: {result.get('status')}")
+            return result
+        else:
+            print(f"错误: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        print(f"请求失败: {e}")
+        return None
+
+# 示例：创建任务
+result = create_hailuo_video(
+    prompt="在未来科技城市的高楼天台上，一位身穿发光服装的女孩正在练习太极拳，城市的霓虹灯光在夜幕中闪烁，远处可见飞行汽车穿梭[缓慢推进][俯拍视角]",
+    seconds="6",
+    prompt_optimizer=True,
+    fast_pretreatment=False,
+    aigc_watermark=False
+)
+```
+
+```javascript JavaScript/Node.js
+const axios = require('axios');
+
+const API_KEY = '<API-KEY>';
+const BASE_URL = 'https://api.tokenops.ai/v1';
+
+async function createHailuoVideo(prompt, model = 'MiniMax-Hailuo-2.3-1080P', options = {}) {
+    const url = `${BASE_URL}/videos`;
+
+    const data = {
+        model: model,
+        prompt: prompt
+    };
+
+    // 添加可选参数
+    ['seconds', 'prompt_optimizer', 'fast_pretreatment', 'aigc_watermark'].forEach(key => {
+        if (options[key] !== undefined) {
+            data[key] = options[key];
+        }
+    });
+
+    try {
+        const response = await axios.post(url, data, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('海螺视频生成任务已创建');
+        console.log(`任务ID: ${response.data.id}`);
+        console.log(`状态: ${response.data.status}`);
+        
+        return response.data;
+    } catch (error) {
+        console.error('任务创建失败:', error.response?.data || error.message);
+        return null;
+    }
+}
+
+// 示例：创建任务
+const result = await createHailuoVideo(
+    '在未来科技城市的高楼天台上，一位身穿发光服装的女孩正在练习太极拳，城市的霓虹灯光在夜幕中闪烁，远处可见飞行汽车穿梭[缓慢推进][俯拍视角]',
+    'MiniMax-Hailuo-2.3-1080P',
+    {
+        seconds: '6',
+        prompt_optimizer: true,
+        fast_pretreatment: false,
+        aigc_watermark: false
+    }
+);
+```
+
+</CodeGroup>
+
+### 响应示例
+
+```json
+{
+  "id": "hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx",
+  "object": "video.generation",
+  "created_at": 1762776961,
+  "model": "MiniMax-Hailuo-2.3-1080P",
+  "status": "in_progress"
+}
+```
+
+## 步骤2：查询任务状态
+
+<CodeGroup>
+
+```bash cURL
+# 查询任务状态
+curl -X GET "https://api.tokenops.ai/v1/videos/hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx" \
+  --header 'Authorization: Bearer <API-KEY>'
+```
+
+```python Python
+def check_hailuo_video_status(video_id):
+    """
+    检查海螺视频生成状态
+    
+    Args:
+        video_id: 视频任务ID
+        
+    Returns:
+        任务状态信息
+    """
+    url = f"{BASE_URL}/videos/{video_id}"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    
+    try:
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"任务状态: {result.get('status')}")
+            return result
+        else:
+            print(f"查询失败: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        print(f"请求失败: {e}")
+        return None
+
+# 示例：查询状态
+video_id = "hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx"
+status_info = check_hailuo_video_status(video_id)
+```
+
+```javascript JavaScript/Node.js
+async function checkHailuoVideoStatus(videoId) {
+    const url = `${BASE_URL}/videos/${videoId}`;
+    
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`
+            }
+        });
+        
+        console.log(`任务状态: ${response.data.status}`);
+        return response.data;
+    } catch (error) {
+        console.error('状态查询失败:', error.response?.data || error.message);
+        return null;
+    }
+}
+
+// 示例：查询状态
+const videoId = 'hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx';
+const statusInfo = await checkHailuoVideoStatus(videoId);
+```
+
+</CodeGroup>
+
+### 状态响应示例
+
+**待处理:**
+```json
+{
+  "id": "hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx",
+  "object": "video.generation",
+  "model": "MiniMax-Hailuo-2.3-1080P",
+  "status": "pending"
+}
+```
+
+**处理中:**
+```json
+{
+  "id": "hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx",
+  "object": "video.generation",
+  "model": "MiniMax-Hailuo-2.3-1080P",
+  "status": "in_progress"
+}
+```
+
+**已完成:**
+```json
+{
+  "id": "hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx",
+  "object": "video.generation",
+  "model": "MiniMax-Hailuo-2.3-1080P",
+  "status": "completed",
+  "completed_at": 1762777061,
+  "url": "https://file.minimaxi.com/video/xxx.mp4?token=xxx"
+}
+```
+
+## 步骤3：下载生成的视频
+
+<CodeGroup>
+
+```bash cURL
+# 下载视频文件
+curl -X GET "https://api.tokenops.ai/v1/videos/hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx/content" \
+  --header 'Authorization: Bearer <API-KEY>' \
+  --output hailuo_video.mp4
+```
+
+```python Python
+def download_hailuo_video(video_id, output_path="hailuo_video.mp4"):
+    """
+    下载生成的海螺视频
+    
+    Args:
+        video_id: 视频任务ID
+        output_path: 输出文件路径
+        
+    Returns:
+        是否下载成功
+    """
+    url = f"{BASE_URL}/videos/{video_id}/content"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    
+    try:
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            with open(output_path, "wb") as f:
+                f.write(response.content)
+            print(f"视频已保存: {output_path}")
+            return True
+        else:
+            print(f"下载失败: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"下载失败: {e}")
+        return False
+
+# 示例：下载视频
+video_id = "hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx"
+success = download_hailuo_video(video_id, "hailuo_future_city_video.mp4")
+```
+
+```javascript JavaScript/Node.js
+const fs = require('fs');
+
+async function downloadHailuoVideo(videoId, outputPath = 'hailuo_video.mp4') {
+    const url = `${BASE_URL}/videos/${videoId}/content`;
+    
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`
+            },
+            responseType: 'stream'
+        });
+        
+        const writer = fs.createWriteStream(outputPath);
+        response.data.pipe(writer);
+        
+        return new Promise((resolve, reject) => {
+            writer.on('finish', () => {
+                console.log(`视频已保存: ${outputPath}`);
+                resolve(true);
+            });
+            writer.on('error', reject);
+        });
+    } catch (error) {
+        console.error('视频下载失败:', error.response?.data || error.message);
+        return false;
+    }
+}
+
+// 示例：下载视频
+const videoId = 'hailuo-task-eff1443c-ccab-4676-aad3-xxxxxx';
+const success = await downloadHailuoVideo(videoId, 'hailuo_future_city_video.mp4');
+```
+
+</CodeGroup>
+
+## 图生视频-首帧示例
+
+海螺支持基于图片生成视频（首帧生成），以下是图生视频-首帧的示例：
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://api.tokenops.ai/v1/videos \
+  --header 'Authorization: Bearer <API-KEY>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "model": "MiniMax-Hailuo-2.3-1080P",
+    "content": [
+      {
+        "type": "text",
+        "text": "基于这张图片，让画面中的人物开始优雅地舞蹈，背景中的樱花花瓣随着微风轻柔飘舞，营造出诗意浪漫的氛围[缓慢旋转][梦幻滤镜]"
+      },
+      {
+        "type": "image_url",
+        "image_url": {
+          "url": "https://cdn.hailuoai.com/prod/2024-09-18-16/user/multi_chat_file/9c0b5c14-ee88-4a5b-b503-4f626f018639.jpeg"
+        },
+        "role": "first_frame"
+      }
+    ],
+    "seconds": "6",
+    "prompt_optimizer": true,
+    "aigc_watermark": false
+  }'
+
+# 使用 Base64 编码图片的示例
+curl --request POST \
+  --url https://api.tokenops.ai/v1/videos \
+  --header 'Authorization: Bearer <API-KEY>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "model": "MiniMax-Hailuo-2.3-1080P",
+    "content": [
+      {
+        "type": "text",
+        "text": "根据图片内容生成动态视频，保持画面风格一致"
+      },
+      {
+        "type": "image_url",
+        "image_url": {
+          "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+        },
+        "role": "first_frame"
+      }
+    ],
+    "prompt_optimizer": false
+  }'
+```
+
+```python Python
+def create_hailuo_image_to_video(prompt, image_url, **kwargs):
+    """
+    海螺图片到视频生成
+
+    Args:
+        prompt: 视频描述文本
+        image_url: 参考图片URL
+        **kwargs: 其他参数
+
+    Returns:
+        任务创建响应
+    """
+    url = f"{BASE_URL}/videos"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "MiniMax-Hailuo-2.3-1080P",
+        "content": [
+            {
+                "type": "text",
+                "text": prompt
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": image_url
+                },
+                "role": "first_frame"
+            }
+        ]
+    }
+
+    # 添加可选参数
+    for key in ["seconds", "prompt_optimizer", "fast_pretreatment", "aigc_watermark"]:
+        if key in kwargs:
+            data[key] = kwargs[key]
+
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        return response.json() if response.status_code == 200 else None
+    except Exception as e:
+        print(f"请求失败: {e}")
+        return None
+
+# 使用示例
+image_url = "https://cdn.hailuoai.com/prod/2024-09-18-16/user/multi_chat_file/9c0b5c14-ee88-4a5b-b503-4f626f018639.jpeg"
+result = create_hailuo_image_to_video(
+    prompt="基于这张图片，让画面中的人物开始优雅地舞蹈，背景中的樱花花瓣随着微风轻柔飘舞，营造出诗意浪漫的氛围[缓慢旋转][梦幻滤镜]",
+    image_url=image_url,
+    seconds="6",
+    prompt_optimizer=True,
+    aigc_watermark=False
+)
+```
+
+</CodeGroup>
+
+## 图生视频-首尾帧示例
+
+**注意**: MiniMax-Hailuo-2.3 系列不支持首尾帧模式，请使用 MiniMax-Hailuo-2.0 系列模型（如 `MiniMax-Hailuo-2.0-1080P` 或 `MiniMax-Hailuo-2.0-768P`）。
+
+海螺支持基于首帧和尾帧图片生成视频，以下是首尾帧生成视频的示例：
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://api.tokenops.ai/v1/videos \
+  --header 'Authorization: Bearer <API-KEY>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "model": "MiniMax-Hailuo-2.0-1080P",
+    "content": [
+      {
+        "type": "text",
+        "text": "A little girl grow up."
+      },
+      {
+        "type": "image_url",
+        "image_url": {
+          "url": "https://filecdn.minimax.chat/public/fe9d04da-f60e-444d-a2e0-18ae743add33.jpeg"
+        },
+        "role": "first_frame"
+      },
+      {
+        "type": "image_url",
+        "image_url": {
+          "url": "https://filecdn.minimax.chat/public/97b7cd08-764e-4b8b-a7bf-87a0bd898575.jpeg"
+        },
+        "role": "last_frame"
+      }
+    ],
+    "seconds": "6",
+    "prompt_optimizer": true,
+    "fast_pretreatment": false
+  }'
+```
+
+```python Python
+def create_hailuo_keyframe_to_video(prompt, first_frame_url, last_frame_url, **kwargs):
+    """
+    海螺首尾帧生成视频
+
+    Args:
+        prompt: 视频描述文本
+        first_frame_url: 首帧图片URL
+        last_frame_url: 尾帧图片URL
+        **kwargs: 其他参数
+
+    Returns:
+        任务创建响应
+    """
+    url = f"{BASE_URL}/videos"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "MiniMax-Hailuo-2.0-1080P",
+        "content": [
+            {
+                "type": "text",
+                "text": prompt
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": first_frame_url
+                },
+                "role": "first_frame"
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": last_frame_url
+                },
+                "role": "last_frame"
+            }
+        ]
+    }
+
+    # 添加可选参数
+    for key in ["seconds", "prompt_optimizer", "fast_pretreatment", "aigc_watermark"]:
+        if key in kwargs:
+            data[key] = kwargs[key]
+
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        return response.json() if response.status_code == 200 else None
+    except Exception as e:
+        print(f"请求失败: {e}")
+        return None
+
+# 使用示例
+first_frame = "https://filecdn.minimax.chat/public/fe9d04da-f60e-444d-a2e0-18ae743add33.jpeg"
+last_frame = "https://filecdn.minimax.chat/public/97b7cd08-764e-4b8b-a7bf-87a0bd898575.jpeg"
+result = create_hailuo_keyframe_to_video(
+    prompt="A little girl grow up.",
+    first_frame_url=first_frame,
+    last_frame_url=last_frame,
+    seconds="6",
+    prompt_optimizer=True,
+    fast_pretreatment=False
+)
+```
+
+```javascript JavaScript/Node.js
+async function createHailuoKeyframeToVideo(prompt, firstFrameUrl, lastFrameUrl, options = {}) {
+    const url = `${BASE_URL}/videos`;
+
+    const data = {
+        model: 'MiniMax-Hailuo-2.0-1080P',
+        content: [
+            {
+                type: 'text',
+                text: prompt
+            },
+            {
+                type: 'image_url',
+                image_url: {
+                    url: firstFrameUrl
+                },
+                role: 'first_frame'
+            },
+            {
+                type: 'image_url',
+                image_url: {
+                    url: lastFrameUrl
+                },
+                role: 'last_frame'
+            }
+        ]
+    };
+
+    // 添加可选参数
+    ['seconds', 'prompt_optimizer', 'fast_pretreatment', 'aigc_watermark'].forEach(key => {
+        if (options[key] !== undefined) {
+            data[key] = options[key];
+        }
+    });
+
+    try {
+        const response = await axios.post(url, data, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log('海螺首尾帧视频生成任务已创建');
+        console.log(`任务ID: ${response.data.id}`);
+        console.log(`状态: ${response.data.status}`);
+
+        return response.data;
+    } catch (error) {
+        console.error('任务创建失败:', error.response?.data || error.message);
+        return null;
+    }
+}
+
+// 使用示例
+const firstFrame = 'https://filecdn.minimax.chat/public/fe9d04da-f60e-444d-a2e0-18ae743add33.jpeg';
+const lastFrame = 'https://filecdn.minimax.chat/public/97b7cd08-764e-4b8b-a7bf-87a0bd898575.jpeg';
+const result = await createHailuoKeyframeToVideo(
+    'A little girl grow up.',
+    firstFrame,
+    lastFrame,
+    {
+        seconds: '6',
+        prompt_optimizer: true,
+        fast_pretreatment: false
+    }
+);
+```
+
+</CodeGroup>
+
+
+## 运镜控制语法
+
+海螺视频生成支持在prompt中使用[指令]语法进行运镜控制，常用指令包括：
+
+### 镜头运动
+- `[推进]` - 镜头向前推进
+- `[拉远]` - 镜头向后拉远  
+- `[左移]` - 镜头向左平移
+- `[右移]` - 镜头向右平移
+- `[上升]` - 镜头向上运动
+- `[下降]` - 镜头向下运动
+- `[旋转]` - 镜头旋转运动
+- `[环绕]` - 镜头环绕主体
+
+### 镜头角度
+- `[俯拍]` - 从上往下拍摄
+- `[仰拍]` - 从下往上拍摄
+- `[侧面]` - 侧面角度拍摄
+- `[正面]` - 正面角度拍摄
+
+### 镜头景别
+- `[远景]` - 远距离拍摄
+- `[全景]` - 展现完整场景
+- `[中景]` - 中等距离拍摄
+- `[近景]` - 较近距离拍摄
+- `[特写]` - 特写镜头
+- `[微距]` - 微距特写
+
+### 视觉效果
+- `[慢镜头]` - 慢动作效果
+- `[快镜头]` - 快动作效果
+- `[梦幻滤镜]` - 梦幻视觉效果
+- `[电影感]` - 电影级视觉效果
+- `[温暖色调]` - 温暖色彩风格
+- `[冷色调]` - 冷色彩风格
+
+### 使用示例
+```
+"一只小猫在花园里玩耍[推进特写]，阳光透过树叶洒在地面上[俯拍角度]，微风轻拂花瓣[慢镜头]"
+```
+
+## 完整工作流示例
+
+<CodeGroup>
+
+```python Python
+import time
+import requests
+
+# ============ 配置 ============
+API_KEY = "<API-KEY>"
+BASE_URL = "https://api.tokenops.ai/v1"
+
+# ============ 步骤1: 创建视频生成任务 ============
+def create_hailuo_video(prompt, model="MiniMax-Hailuo-2.3-1080P", **kwargs):
+    """
+    创建海螺视频生成任务
+
+    Args:
+        prompt: 视频描述文本
+        model: 使用的模型名称
+        **kwargs: 其他参数（seconds, prompt_optimizer, fast_pretreatment, aigc_watermark）
+
+    Returns:
+        任务创建响应
+    """
+    url = f"{BASE_URL}/videos"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": model,
+        "prompt": prompt
+    }
+
+    # 添加可选参数
+    for key in ["seconds", "prompt_optimizer", "fast_pretreatment", "aigc_watermark"]:
+        if key in kwargs:
+            data[key] = kwargs[key]
+
+    try:
+        response = requests.post(url, headers=headers, json=data)
+
+        if response.status_code == 200:
+            result = response.json()
+            print(f"海螺视频生成任务已创建")
+            print(f"任务ID: {result.get('id')}")
+            print(f"状态: {result.get('status')}")
+            return result
+        else:
+            print(f"错误: {response.status_code} - {response.text}")
+            return None
+
+    except Exception as e:
+        print(f"请求失败: {e}")
+        return None
+
+# ============ 步骤2: 查询任务状态 ============
+def check_hailuo_video_status(video_id):
+    """
+    检查海螺视频生成状态
+
+    Args:
+        video_id: 视频任务ID
+
+    Returns:
+        任务状态信息
+    """
+    url = f"{BASE_URL}/videos/{video_id}"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}"
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            result = response.json()
+            return result
+        else:
+            print(f"查询失败: {response.status_code} - {response.text}")
+            return None
+
+    except Exception as e:
+        print(f"请求失败: {e}")
+        return None
+
+# ============ 步骤3: 下载生成的视频 ============
+def download_hailuo_video(video_id, output_path="hailuo_video.mp4"):
+    """
+    下载生成的海螺视频
+
+    Args:
+        video_id: 视频任务ID
+        output_path: 输出文件路径
+
+    Returns:
+        是否下载成功
+    """
+    url = f"{BASE_URL}/videos/{video_id}/content"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}"
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            with open(output_path, "wb") as f:
+                f.write(response.content)
+            print(f"视频已保存: {output_path}")
+            return True
+        else:
+            print(f"下载失败: {response.status_code} - {response.text}")
+            return False
+
+    except Exception as e:
+        print(f"下载失败: {e}")
+        return False
+
+# ============ 完整工作流 ============
+def complete_hailuo_video_workflow(prompt, **kwargs):
+    """
+    海螺视频生成完整工作流
+
+    Args:
+        prompt: 视频描述
+        **kwargs: 其他参数
+
+    Returns:
+        视频文件路径
+    """
+    print("🎬 开始海螺视频生成流程...")
+
+    # 步骤1: 创建任务
+    print("📝 创建视频生成任务...")
+    task_result = create_hailuo_video(prompt, **kwargs)
+    if not task_result:
+        print("❌ 任务创建失败")
+        return None
+
+    task_id = task_result['id']
+    print(f"✅ 任务创建成功，ID: {task_id}")
+
+    # 步骤2: 等待完成
+    print("⏳ 等待视频生成完成...")
+    max_attempts = 60  # 最多等待10分钟
+    attempt = 0
+
+    while attempt < max_attempts:
+        status_result = check_hailuo_video_status(task_id)
+        if not status_result:
+            print("❌ 状态查询失败")
+            return None
+
+        status = status_result.get('status')
+        print(f"📊 当前状态: {status}")
+
+        if status == 'completed':
+            print("🎉 视频生成完成!")
+            break
+        elif status == 'failed':
+            print("❌ 视频生成失败")
+            error = status_result.get('error', {})
+            print(f"错误信息: {error.get('message', '未知错误')}")
+            return None
+
+        # 等待10秒后再次查询
+        time.sleep(10)
+        attempt += 1
+
+    if attempt >= max_attempts:
+        print("⏰ 等待超时")
+        return None
+
+    # 步骤3: 下载视频
+    print("📥 下载视频文件...")
+    output_path = f"hailuo_video_{int(time.time())}.mp4"
+    success = download_hailuo_video(task_id, output_path)
+
+    if success:
+        print(f"✅ 视频下载成功: {output_path}")
+        return output_path
+    else:
+        print("❌ 视频下载失败")
+        return None
+
+# ============ 使用示例 ============
+if __name__ == "__main__":
+    video_path = complete_hailuo_video_workflow(
+        prompt="在森林深处的小溪边，一只优雅的白鹿正在静静饮水，阳光透过树叶形成斑驳的光影，蝴蝶在花丛中飞舞[缓慢推进][梦幻滤镜]",
+        model="MiniMax-Hailuo-2.3-1080P",
+        seconds="6",
+        prompt_optimizer=True,
+        aigc_watermark=False
+    )
+
+    if video_path:
+        print(f"🎊 海螺视频生成完整流程成功完成！视频保存在: {video_path}")
+```
+
+</CodeGroup>
+
+## 注意事项
+
+1. **模型选择**: 推荐使用 **MiniMax-Hailuo-2.3-1080P** 获得最佳效果，如需更经济的方案可选择 768P 版本
+2. **分辨率控制**: 通过选择不同的模型名称来控制输出分辨率（1080P 或 768P）
+3. **Prompt优化**: 开启 `prompt_optimizer` 能显著提升生成质量
+4. **运镜控制**: 合理使用[指令]语法可以获得更精确的视觉效果
+5. **首尾帧限制**: 首尾帧模式仅支持海螺2.0系列模型（MiniMax-Hailuo-2.0-1080P / MiniMax-Hailuo-2.0-768P）
+6. **费用控制**: 时长和分辨率都会影响费用，请根据需求合理设置
+7. **文件格式**: 生成的视频为MP4格式，H.264编码，25fps

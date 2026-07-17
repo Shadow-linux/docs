@@ -1,0 +1,17 @@
+---
+title: 'getGenerateVideosOperation'
+openapi: 'GET /v1beta/projects/{project_id}/locations/{location}/publishers/{publisher}/models/{model}/operations/{operation_id}'
+---
+
+查询长时间运行的视频生成任务的状态和结果。
+
+当原始视频模型名称包含 `/` 时，operation resource name 会保留完整模型标识，例如
+`.../models/google/veo-3.1-generate-preview/operations/{operation_id}`。
+
+完成后的响应同时保留两套兼容字段：已有客户可以继续读取
+`response.generatedVideos`，Google 官方 SDK 读取
+`response.generateVideoResponse.generatedSamples[].video`。新增 Google SDK 字段不会删除、
+重命名或重组已有 TokenOps 响应字段。
+
+官方 Google SDK 可以直接轮询这个 GET 接口。即使 SDK 为 GET 请求保留
+`Content-Type: application/json` 且不发送 body，Router 也会正常处理，无需客户删除该请求头。

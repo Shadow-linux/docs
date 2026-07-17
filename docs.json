@@ -1,72 +1,253 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "TokenOPS.AI文档",
+  "description": "TokenOPS.AI的官方文档，提供了关于TokenOPS.AI的使用指南、API参考、隐私政策和更新公告。",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#3B82F6",
+    "light": "#F8FAFC",
+    "dark": "#0F172A"
   },
-  "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "versions": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
+        "version": "简体中文",
+        "tabs": [
+          {
+            "tab": "用户指南",
+            "groups": [
+              {
+                "group": "入门",
+                "pages": [
+                  "userguide/introduction",
+              "userguide/quckstart",
+                  {
+                    "group": "AI客户端使用",
+                    "pages": [
+                      "userguide/aiclient/chatbox",
+                      "userguide/aiclient/cherrystudio",
+                      "userguide/aiclient/maxkb",
+                      "userguide/aiclient/claudecode",
+                      "userguide/aiclient/codex",
+                      "userguide/aiclient/openclaw"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "接口文档",
+            "groups": [
+              {
+                "group": "API端点参考",
+                "pages": [
+                  {
+                    "group": "OpenAI接口",
+                    "pages": [
+                      "api-reference/endpoint/chatcompletions",
+                      "api-reference/endpoint/responses",
+                      {
+                        "group": "图片生成",
+                        "pages": [
+                          "api-reference/endpoint/images-generations",
+                          "api-reference/endpoint/images-edits"
+                        ]
+                      },
+                      {
+                        "group": "视频生成",
+                        "pages": [
+                          "api-reference/endpoint/videos-generations",
+                          "api-reference/endpoint/videos-status",
+                          "api-reference/endpoint/videos-content",
+                          "api-reference/endpoint/videos-remix"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Claude接口",
+                    "pages": [
+                      "api-reference/endpoint/messages"
+                    ]
+                  },
+                  {
+                    "group": "Gemini接口",
+                    "pages": [
+                      "api-reference/endpoint/generateContent",
+                      "api-reference/endpoint/streamGenerateContent",
+                      {
+                        "group": "视频生成",
+                        "pages": [
+                          "api-reference/endpoint/predictLongRunning",
+                          "api-reference/endpoint/getGenerateVideosOperation"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "File API",
+                    "pages": [
+                      "api-reference/endpoint/files-upload-url"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "使用示例",
+                "pages": [
+                  {
+                    "group": "基础对话",
+                    "pages": [
+                      "api-reference/examples/basic/openai-basic",
+                      "api-reference/examples/basic/claude-basic",
+                      "api-reference/examples/basic/gemini-basic"
+                    ]
+                  },
+                  {
+                    "group": "Responses API",
+                    "pages": [
+                      "api-reference/examples/basic/responses-basic",
+                      "api-reference/examples/thinking/responses-thinking",
+                      "api-reference/examples/structured/responses-structured",
+                      "api-reference/examples/tools/responses-tools",
+                      "api-reference/examples/streaming/responses-streaming",
+                      "api-reference/examples/mcp/responses-mcp"
+                    ]
+                  },
+                  {
+                    "group": "流式对话",
+                    "pages": [
+                      "api-reference/examples/streaming/openai-streaming",
+                      "api-reference/examples/streaming/claude-streaming",
+                      "api-reference/examples/streaming/gemini-streaming"
+                    ]
+                  },
+                  {
+                    "group": "结构化输出",
+                    "pages": [
+                      "api-reference/examples/structured/openai-structured",
+                      "api-reference/examples/structured/claude-structured",
+                      "api-reference/examples/structured/gemini-structured"
+                    ]
+                  },
+                  {
+                    "group": "思考模式",
+                    "pages": [
+                      "api-reference/examples/thinking/openai-thinking",
+                      "api-reference/examples/thinking/claude-thinking",
+                      "api-reference/examples/thinking/gemini-thinking"
+                    ]
+                  },
+                  {
+                    "group": "工具调用",
+                    "pages": [
+                      "api-reference/examples/tools/openai-tools",
+                      "api-reference/examples/tools/claude-tools",
+                      "api-reference/examples/tools/gemini-tools"
+                    ]
+                  },
+                  {
+                    "group": "图片生成",
+                    "pages": [
+                      "api-reference/examples/images/async-image",
+                      "api-reference/examples/images/openai-image",
+                      "api-reference/examples/images/douao",
+                      "api-reference/examples/images/qwen",
+                      "api-reference/examples/images/nanobanana",
+                      "api-reference/examples/images/jimeng"
+                    ]
+                  },
+                  {
+                    "group": "视频生成",
+                    "pages": [
+                      "api-reference/examples/videos/openai-sora2",
+                      "api-reference/examples/videos/google-veo3",
+                      "api-reference/examples/videos/jimeng",
+                      "api-reference/examples/videos/qwen",
+                      "api-reference/examples/videos/doubao-seedance",
+                      "api-reference/examples/videos/hailuo",
+                      "api-reference/examples/videos/kling"
+                    ]
+                  },
+                  {
+                    "group": "多模态对话",
+                    "pages": [
+                      "api-reference/examples/multimodal/openai-vision",
+                      "api-reference/examples/multimodal/claude-vision",
+                      "api-reference/examples/multimodal/gemini-vision"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "协议兼容",
+            "groups": [
+              {
+                "group": "协议转换",
+                "pages": [
+                  "api-reference/proto_trans/openai"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "常见问题",
+            "groups": [
+              {
+                "group": "常见问题",
+                "pages": [
+                  "qa/error-code"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "隐私&条款",
+            "pages": [
+              "legals/user-terms",
+              "legals/privacy-policy",
+              "legals/recharge-policy"
+            ]
+          }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
     ]
   },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+  "logo": {
+    "light": "/tokenopsai.svg",
+    "dark": "/tokenopsai-d.svg",
+    "href": "https://www.tokenops.ai"
+  },
+  "favicon": "/favicon.ico",
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "TokenOPS.AI",
+      "href": "https://www.tokenops.ai"
+    }
+  },
+  "errors": {
+    "404": {
+      "redirect": true
+    }
+  },
+  "api": {
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": [
+        "curl",
+        "python",
+        "javascript",
+        "go",
+        "java",
+        "php"
+      ],
+      "defaults": "required"
     }
   }
 }

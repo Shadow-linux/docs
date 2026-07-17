@@ -1,0 +1,7 @@
+---
+title: 'streamGenerateContent'
+openapi: 'POST /v1beta/models/{model}:streamGenerateContent'
+---
+
+`model` 接受完整 TokenOps 模型名称，包括 `google/gemini-3.1-pro-preview` 这类带 `/`
+的名称。官方 Google GenAI SDK 可直接使用该名称，无需 URL 或响应适配。

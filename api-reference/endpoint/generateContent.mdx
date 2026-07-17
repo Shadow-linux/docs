@@ -1,0 +1,8 @@
+---
+title: 'generateContent'
+openapi: 'POST /v1beta/models/{model}:generateContent'
+---
+
+`model` 接受完整 TokenOps 模型名称，例如 `gemini-3.1-pro-preview` 或
+`google/gemini-3.1-pro-preview`。`/` 是模型标识的一部分，官方 Google GenAI SDK
+客户端可直接传入完整名称，无需删除、替换或编码斜杠。

@@ -1,0 +1,14 @@
+{
+  "excluded_files": [
+    "Dockerfile",
+    "Dockerfile.runtime",
+    "render-docs.sh"
+  ],
+  "file_count": 114,
+  "generator": "deploy/publish_mintlify_docs.py",
+  "schema_version": 1,
+  "source_path": "model-service/services/mintlify",
+  "source_repository": "tokenops",
+  "source_sha": "7fd0b06a8157944c75f33e51678e9612aca3a645",
+  "tree_sha256": "04c5b82fecfd7ba89880265861d72fe674d62c0f8afd08e38cac921068f11224"
+}
