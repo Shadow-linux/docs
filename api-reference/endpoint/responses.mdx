@@ -2,3 +2,52 @@
 title: '/v1/responses'
 openapi: 'POST /v1/responses'
 ---
+
+## 使用 previous_response_id 续聊
+
+从 Router v1.7.2 起，平台在成功完成的非流式响应或流式 `response.completed`
+事件中记录 `response.id` 对应的上游账号。下一轮可使用：
+
+```json
+{
+  "model": "与上一轮相同的模型",
+  "previous_response_id": "上一轮返回的 response.id",
+  "input": "继续回答"
+}
+```
+
+- 必须使用相同的 API Key 和平台模型；别名按解析后的平台模型隔离。
+- 每个新 ID 的路由绑定保留 **1 小时**。读取旧 ID 不续期，新响应生成的新 ID 独立计时。
+- 命中时使用原上游账号，不受请求体长度影响，也不会被 `prompt_cache_key` 等软亲和覆盖。
+- 不传该字段或传 `null` 时保持原有选号；空字符串、空白或非字符串返回参数错误。
+- 原有 `prompt_cache_key`、message/reasoning item 亲和的 7 天期限不变。
+
+此绑定只记录账号，不保存对话内容，也不保证上游仍保存该响应或命中提示词缓存。
+上游不支持、未存储或已过期的上下文仍可能返回上游错误。
+上线前产生的 ID 无法自动补齐绑定。
+
+### 错误与过期
+
+找不到本平台绑定或绑定已过期时，返回 HTTP 400：
+
+```json
+{
+  "error": {
+    "type": "invalid_request_error",
+    "code": "previous_response_not_found",
+    "param": "previous_response_id",
+    "message": "Previous response not found or its routing binding has expired."
+  }
+}
+```
+
+| 情况 | HTTP / error.code | 行为 |
+|---|---|---|
+| ID 参数类型或格式无效 | 400 / `invalid_value` | 不请求上游 |
+| 绑定缺失、过期或不在当前 API Key/模型范围 | 400 / `previous_response_not_found` | 不自动换账号 |
+| 原账号不可路由（禁用、移出模型池、协议不支持或熔断） | 503 / `previous_response_account_unavailable` | 不自动换账号 |
+| 路由缓存读取故障 | 503 / `previous_response_lookup_unavailable` | 不误报 ID 不存在，不自动换账号 |
+
+原账号可路由性沿用当前模型池规则；本功能不新增基于历史测试健康值的封禁策略。
+若上游已生成成功但新绑定写入失败，平台保留本次响应与正常计费，不自动重新生成；
+后续引用该 ID 时仍按实际绑定状态判断。
