@@ -11,6 +11,71 @@ title: '通义万象视频生成示例'
 2. **查询任务状态** - 定期检查任务进度
 3. **下载生成的视频** - 任务完成后下载视频文件
 
+## 可选请求头：内容审核配置
+
+通过阿里通道调用万相视频模型（例如 `wan3.0-video`）时，可以在创建视频任务的 HTTP 请求中携带 `X-DashScope-DataInspection`。它是内容审核配置请求头，**不是生成视频的必填项**；不传时由上游按默认策略处理，TokenOps 不会自动为请求添加 `disable` 配置。
+
+只有在阿里或账号服务方确认当前模型、地域及账号支持相应配置时，才使用下方示例值：
+
+```http
+X-DashScope-DataInspection: {"input":"disable","output":"disable"}
+```
+
+- `input`、`output` 分别对应输入和输出方向的审核配置。
+- 请求头的值是 **JSON 字符串**，不要将它放入请求正文或视频参数中。
+- TokenOps 仅透传此配置；是否接受、实际生效范围均由上游决定，**不保证关闭所有审核，也不保证生成成功**。它不能解决 API Key 无效、账号权限不足或视频参数错误等问题。
+
+以下示例调用 TokenOps 的视频接口 `/v1/videos`，不是文本生成或聊天接口。`model` 请替换为平台中实际可用且有访问权限的模型名称；如果不需要传递此配置，删除对应请求头即可，其他调用方式不变。
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://api.tokenops.ai/v1/videos \
+  --header 'Authorization: Bearer <API-KEY>' \
+  --header 'Content-Type: application/json' \
+  --header 'X-DashScope-DataInspection: {"input":"disable","output":"disable"}' \
+  --data '{
+    "model": "wan3.0-video",
+    "prompt": "一只小猫在阳光下的花园里散步，镜头平稳移动",
+    "size": "1280x720",
+    "seconds": "2"
+  }'
+```
+
+```python Python
+import json
+import requests
+
+headers = {
+    "Authorization": "Bearer <API-KEY>",
+    "Content-Type": "application/json",
+    # 可选：仅在上游确认支持时添加；不需要时删除此项。
+    "X-DashScope-DataInspection": json.dumps({
+        "input": "disable",
+        "output": "disable",
+    }),
+}
+
+response = requests.post(
+    "https://api.tokenops.ai/v1/videos",
+    headers=headers,
+    json={
+        "model": "wan3.0-video",
+        "prompt": "一只小猫在阳光下的花园里散步，镜头平稳移动",
+        "size": "1280x720",
+        "seconds": "2",
+    },
+    timeout=30,
+)
+response.raise_for_status()
+print(response.json())
+```
+
+</CodeGroup>
+
+创建成功后，继续按照本文的任务查询与下载步骤处理。阿里模型参数和调用要求以[万相 3.0 官方 API 参考](https://help.aliyun.com/zh/model-studio/wan3-video-generation-api-reference)为准。
+
 ## 支持的参数
 
 ### 通用参数
